@@ -42,19 +42,88 @@ struct tree_node
 };
 
 void rd(struct tree_node *node) {
-    struct tree_node m = *node;
-    node->parent = node->lchild;
-    node->lchild = node->lchild->rchild;
-    m.lchild->parent = m.parent;
-    m.lchild->rchild = node;
+    struct tree_node *m = node->lchild;
+    node->lchild = m->rchild;
+    
+    if (node->lchild != NULL) {
+        node->lchild->parent = node;
+    }
+    
+    m->rchild = node;
+    m->parent = node->parent;
+    node->parent = m;
+    
+    // Atualizar o pai do nó original
+    if (m->parent != NULL) {
+        if (m->parent->lchild == node) {
+            m->parent->lchild = m;
+        } else {
+            m->parent->rchild = m;
+        }
+    }
 }
 
 void re(struct tree_node *node) {
-    struct tree_node m = *node;
-    node->parent = node->rchild;
-    node->rchild = node->rchild->lchild;
-    m.rchild->parent = m.parent;
-    m.rchild->lchild = node;
+    struct tree_node *m = node->rchild;
+    node->rchild = m->lchild;
+    
+    if (node->rchild != NULL) {
+        node->rchild->parent = node;
+    }
+    
+    m->lchild = node;
+    m->parent = node->parent;
+    node->parent = m;
+    
+    // Atualizar o pai do nó original
+    if (m->parent != NULL) {
+        if (m->parent->lchild == node) {
+            m->parent->lchild = m;
+        } else {
+            m->parent->rchild = m;
+        }
+    }
+}
+
+void update_heights_root(struct tree_node *root) {
+    if (root != NULL) {  
+        update_heights_root(root->lchild);
+        update_heights_root(root->rchild);
+        int lheight, rheight;
+        if (root->lchild == NULL) {
+            lheight = 0;
+        }
+        else {
+            lheight = root->lchild->height;
+        }
+        if (root->rchild == NULL) {
+            rheight = 0;
+        }
+        else {
+            rheight = root->rchild->height;
+        }
+        root->height = max(lheight, rheight) + 1;
+    }
+}
+
+void update_heights(struct tree_node *node) {
+    if (node != NULL) {
+        int lheight, rheight;
+        if (node->lchild == NULL) {
+            lheight = 0;
+        }
+        else {
+            lheight = node->lchild->height;
+        }
+        if (node->rchild == NULL) {
+            rheight = 0;
+        }
+        else {
+            rheight = node->rchild->height;
+        }
+        node->height = max(lheight, rheight) + 1;
+        update_heights(node->parent);
+    }
 }
 
 int cdiff(struct tree_node *node) {
@@ -115,12 +184,15 @@ void balance(struct tree_node *node) {
             }
             else if (c == 3) {
                 re(node->lchild);
+                update_heights(node->lchild);
                 rd(node);
             }
             else if (c == 4) {
                 rd(node->rchild);
+                update_heights(node->rchild);
                 re(node);
             }
+            update_heights(node);   
         }
         node = node->parent;
     }
@@ -130,7 +202,8 @@ void insert(struct tree_node **r, struct tree_node *w) {
     if ((*r) == NULL)
     {
         (*r) = w;
-        balance(w);
+        update_heights(w); 
+        balance(w); 
     }
     else
     {
@@ -155,12 +228,11 @@ struct tree_node *search(struct tree_node *r, int v) {
     return NULL;
 }
 
-void print(struct tree_node *r) {
-    if (r != NULL) {
-        print(r->lchild);
-        printf("%d\n", r->value);
-        print(r->rchild);
+struct tree_node *reroot(struct tree_node *root) {
+    while (root->parent != NULL) {
+        root = root->parent;
     }
+    return root;
 }
 
 int main(int argc, char **argv) {
@@ -172,7 +244,10 @@ int main(int argc, char **argv) {
     srand(time(NULL));
     for (i = 0; i < n; i++) {
         insert(&root, tree_new(rand() % 2000));
+        root = reroot(root);
+        update_heights_root(root);
     }
+    root = reroot(root);
     
     if (clock_gettime(CLOCK_MONOTONIC, &start) == -1) {
         perror("clock_gettime");
