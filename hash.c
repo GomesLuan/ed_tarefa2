@@ -48,6 +48,7 @@ struct hash *hash_new(int m);
 void list_insert(struct list_node **l, struct list_node *w);
 void hash_insert(struct hash *h, struct list_node *w);
 void rehashing(struct hash *h, struct list_node *w);
+struct list_node *search(struct hash *h, int v);
 
 struct list_node *list_new(int v) {
     struct list_node *w;
@@ -98,6 +99,17 @@ void hash_insert(struct hash *h, struct list_node *w) {
         free(new_h);
         hash_insert(h, w);
     }
+}
+
+struct list_node *search(struct hash *h, int v) {
+    struct list_node *current = h->t[v % h->m];
+    while (current != NULL) {
+        if (current->value == v) {
+            return current;
+        }
+        current = current->next;
+    }
+    return NULL;
 }
 
 void rehashing(struct hash *h, struct list_node *w) {
