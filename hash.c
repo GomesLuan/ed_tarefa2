@@ -129,13 +129,15 @@ int main(int argc, char **argv) {
     int i;
     srand(time(NULL));
     for (i = 0; i < n; i++) {
-        hash_insert(h, list_new(rand() % 2000));
+        hash_insert(h, list_new(rand() % n));
     }
     
     if (clock_gettime(CLOCK_MONOTONIC, &start) == -1) {
         perror("clock_gettime");
         return EXIT_FAILURE;
     }
+
+    struct list_node *v = search(h, rand() % n);
 
     if (clock_gettime(CLOCK_MONOTONIC, &end) == -1) {
         perror("clock_gettime");
@@ -144,5 +146,6 @@ int main(int argc, char **argv) {
 
     t = (end.tv_sec - start.tv_sec) + (end.tv_nsec - start.tv_nsec);
     printf("%d\n", t);
+    free(v);
     return EXIT_SUCCESS;
 }
